@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Roomsy Hotel Booking</title>
+  <style>
+    :root {
+      --bg: #0b1220; --card: #0f172a; --muted: #94a3b8; --txt: #e5e7eb; --accent: #71a3cb;
+    }
+    body { margin:0; font-family:Inter, system-ui, Arial; background:var(--bg); color:var(--txt); padding:28px; }
+    .container { max-width: 980px; margin: 0 auto; }
+    h1 { margin:0 0 12px 0; font-size:32px; }
+    .card { background:var(--card); border:1px solid #1f2937; padding:16px; border-radius:12px; margin-bottom:14px; }
+    label { display:block; color:var(--muted); font-size:13px; margin-bottom:6px; }
+    input, select, button { width:100%; padding:10px; border-radius:8px; border:1px solid #1f2937; background:#07101a; color:var(--txt); }
+    .row { display:flex; gap:12px; }
+    .col { flex:1; }
+    button.primary { background:var(--accent); color:#02130a; font-weight:700; border:none; cursor:pointer; }
+    .results { margin-top:12px; }
+    .room { padding:12px; border-radius:8px; background:rgba(255,255,255,0.02); border:1px solid #1f2937; margin-bottom:10px; }
+    .muted { color:var(--muted); font-size:13px; }
+    .modal { position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.6); z-index:999; }
+    .modal .panel { width:90%; max-width:520px; background:var(--card); padding:18px; border-radius:12px; border:1px solid #1f2937; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Roomsy Hotel Booking</h1>
+
+    <div class="card">
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+        <div>
+          <label for="checkIn">Check-in</label>
+          <input type="date" id="checkIn">
+        </div>
+        <div>
+          <label for="checkOut">Check-out</label>
+          <input type="date" id="checkOut">
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:12px;">
+        <div class="col">
+          <label for="adults">Adults</label>
+          <input type="number" id="adults" min="1" value="2">
+        </div>
+        <div class="col">
+          <label for="children">Children</label>
+          <input type="number" id="children" min="0" value="0">
+        </div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <label for="ratePlan">Rate Plan</label>
+        <select id="ratePlan"><option value="">All</option></select>
+      </div>
+
+      <div style="margin-top:12px;">
+        <button id="searchBtn" class="primary">Search Availability</button>
+      </div>
+    </div>
+
+    <div id="results" class="results"></div>
+
+    <div id="bookingPanel" class="card" style="display:none;">
+      <h3>Confirm Booking</h3>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+        <div>
+          <label for="guestName">Guest name</label>
+          <input id="guestName" type="text" placeholder="Full name">
+        </div>
+        <div>
+          <label for="guestEmail">Guest email</label>
+          <input id="guestEmail" type="email" placeholder="you@example.com">
+        </div>
+      </div>
+      <div style="margin-top:8px;">
+        <label for="guestPhone">Phone</label>
+        <input id="guestPhone" type="text" placeholder="+91 98765 43210">
+      </div>
+
+      <p class="muted">Selected: <span id="selectedRoom">—</span></p>
+      <p class="muted">Total: ₹ <strong id="selectedTotal">0</strong></p>
+
+      <div style="margin-top:12px;">
+        <button id="confirmBookingBtn" class="primary">Book Now</button>
+        <button id="cancelBookingBtn" style="margin-left:8px; margin-top:8px;">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="confirmationModal" class="modal">
+    <div class="panel">
+      <h3 id="modalTitle">Booking Confirmed</h3>
+      <p id="modalText"></p>
+      <div style="text-align:right; margin-top:8px;">
+        <button id="closeModalBtn" class="primary">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
