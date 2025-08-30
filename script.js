@@ -1,8 +1,7 @@
-// script.js - frontend
-// Replace this with your deployed Apps Script Web App URL (from Deploy -> Web App)
-const API_URL = "https://script.google.com/macros/s/AKfycbxXxwEdAqQOvXp2o1P7iEsJ9D8NuIYNmkgb1wNQIJ4sny2Bf4lIMuwPW7Ev3zv8rmC0/exec"; // e.g. https://script.google.com/macros/s/AKfycb.../exec
 
-// DOM refs
+const API_URL = "https://script.google.com/macros/s/AKfycbxXxwEdAqQOvXp2o1P7iEsJ9D8NuIYNmkgb1wNQIJ4sny2Bf4lIMuwPW7Ev3zv8rmC0/exec"; 
+
+
 const ratePlanSelect = document.getElementById("ratePlan");
 const searchBtn = document.getElementById("searchBtn");
 const resultsDiv = document.getElementById("results");
@@ -21,7 +20,7 @@ const closeModalBtn = document.getElementById("closeModalBtn");
 
 let selectedBooking = null;
 
-// Helper: send GET request
+
 async function apiGet(params) {
   const url = API_URL + "?" + new URLSearchParams(params).toString();
   const res = await fetch(url, { method: "GET", mode: "cors", headers: { "Accept": "application/json" } });
@@ -32,7 +31,7 @@ async function apiGet(params) {
   return res.json();
 }
 
-// Helper: send POST (use text/plain to avoid preflight)
+
 async function apiPost(payload) {
   const res = await fetch(API_URL, {
     method: "POST",
@@ -47,7 +46,7 @@ async function apiPost(payload) {
   return res.json();
 }
 
-// Load rate plans
+
 async function loadRatePlans() {
   try {
     const plans = await apiGet({ action: "rateplans" });
@@ -57,7 +56,7 @@ async function loadRatePlans() {
       return;
     }
     plans.forEach(p => {
-      // try common header keys
+      
       const name = p.Name || p.name || p['PlanID'] || Object.values(p)[0] || "";
       const opt = document.createElement("option");
       opt.value = name;
@@ -70,7 +69,6 @@ async function loadRatePlans() {
   }
 }
 
-// Search availability
 searchBtn.addEventListener("click", async () => {
   const checkIn = document.getElementById("checkIn").value;
   const checkOut = document.getElementById("checkOut").value;
@@ -94,7 +92,7 @@ searchBtn.addEventListener("click", async () => {
       plan: plan
     });
 
-    // Clear results
+    
     resultsDiv.innerHTML = "";
     const results = (data && data.results) ? data.results : [];
     if (!results || results.length === 0) {
@@ -132,13 +130,13 @@ searchBtn.addEventListener("click", async () => {
   }
 });
 
-// Cancel booking panel
+
 cancelBookingBtn.addEventListener("click", () => {
   bookingPanel.style.display = "none";
   selectedBooking = null;
 });
 
-// Confirm booking
+
 confirmBookingBtn.addEventListener("click", async () => {
   if (!selectedBooking) {
     alert("Please select a room first.");
@@ -173,7 +171,7 @@ confirmBookingBtn.addEventListener("click", async () => {
       modalText.innerHTML = `Booking ID: <strong>${res.bookingID}</strong><br/>Room: ${selectedBooking.Name}<br/>Guest: ${name}<br/>Total: ₹ ${selectedBooking.total}`;
       confirmationModal.style.display = "flex";
       bookingPanel.style.display = "none";
-      // Reset selection
+      
       selectedBooking = null;
     } else {
       modalTitle.textContent = "Booking Failed";
@@ -194,3 +192,4 @@ closeModalBtn.addEventListener("click", () => {
 
 // Initial load
 loadRatePlans();
+
