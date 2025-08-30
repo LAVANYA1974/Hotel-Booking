@@ -1,13 +1,12 @@
-// Code.gs - Apps Script backend for Roomsy Hotel Booking
-// Paste this in your Apps Script project and deploy as Web App (Anyone, execute as Me)
 
-const SHEET_ID = "16VSJa8ylBPx3kyL3-V3gY74rqhOlEH8g5Xg6Hy47Uzk"; // keep your sheet id
+
+const SHEET_ID = "16VSJa8ylBPx3kyL3-V3gY74rqhOlEH8g5Xg6Hy47Uzk"; 
 const SHEET_ROOMS = "Rooms";
 const SHEET_INVENTORY = "Inventory";
 const SHEET_RATEPLANS = "RatePlans";
 const SHEET_BOOKINGS = "Bookings";
 
-// ---------- Helpers ----------
+
 function jsonOutput(obj) {
   return ContentService
     .createTextOutput(JSON.stringify(obj))
@@ -15,7 +14,7 @@ function jsonOutput(obj) {
 }
 
 function parseDateString(dateStr) {
-  // Accept yyyy-mm-dd or ISO format
+  
   const d = new Date(dateStr);
   return (d instanceof Date && !isNaN(d)) ? d : null;
 }
@@ -25,7 +24,7 @@ function daysBetween(start, end) {
   return Math.round((end - start) / msPerDay);
 }
 
-// normalize a modifier value: if value <= 1 it's fractional (0.05 => 5%), if >1 it's percent (5 => 5%)
+
 function normalizeModifier(val) {
   if (val === null || val === undefined || val === "") return 0;
   const num = Number(val);
@@ -49,10 +48,10 @@ function doGet(e) {
   }
 }
 
-// Use POST for booking. To avoid CORS preflight in many browsers, frontend will POST with content-type "text/plain" (no preflight).
+
 function doPost(e) {
   try {
-    // Apps Script provides postData.contents
+    
     const raw = e.postData && e.postData.contents ? e.postData.contents : null;
     if (!raw) return jsonOutput({ ok: false, message: "No payload" });
 
@@ -72,7 +71,7 @@ function doPost(e) {
   }
 }
 
-// Allow simple OPTIONS preflight response (some browsers still send it)
+
 function doOptions(e) {
   return ContentService.createTextOutput("OK").setMimeType(ContentService.MimeType.TEXT);
 }
@@ -94,7 +93,7 @@ function getRatePlans() {
   return plans;
 }
 
-// Inventory sheet expected columns: Date (YYYY-MM-DD), RoomTypeID, Allotment, Booked
+
 function getAvailability(e) {
   const checkin = e.parameter.checkin;
   const checkout = e.parameter.checkout;
@@ -108,7 +107,7 @@ function getAvailability(e) {
     return { results: [], message: "Invalid or missing checkin/checkout dates" };
   }
 
-  // Load Rooms and Inventory
+ 
   const ss = SpreadsheetApp.openById(SHEET_ID);
   const roomsSheet = ss.getSheetByName(SHEET_ROOMS);
   const invSheet = ss.getSheetByName(SHEET_INVENTORY);
@@ -127,7 +126,7 @@ function getAvailability(e) {
     return o;
   });
 
-  // Build inventory map: key = dateStr + '|' + roomTypeID -> {Allotment, Booked, rowIndex}
+  
   const invHeaders = (inv && inv.length > 0) ? inv[0] : [];
   const invRows = (inv && inv.length > 1) ? inv.slice(1) : [];
   const invMap = {}; // key -> {Allotment, Booked, rowIndex} ; rowIndex is 2-based sheet row index
@@ -135,9 +134,9 @@ function getAvailability(e) {
     const row = invRows[r];
     const rowObj = {};
     invHeaders.forEach((h, i) => rowObj[h] = row[i]);
-    // Expect date column name like "Date (YYYY-MM-DD)" or actual Date object
+    
     const dateCell = rowObj[invHeaders[0]];
-    // normalize to yyyy-mm-dd string
+    
     let d;
     if (dateCell instanceof Date) {
       d = Utilities.formatDate(dateCell, Session.getScriptTimeZone(), "yyyy-MM-dd");
@@ -155,7 +154,7 @@ function getAvailability(e) {
     };
   }
 
-  // Find plan modifier if provided
+ 
   let planModifier = 0;
   if (plans && plans.length > 1) {
     const planHeaders = plans[0];
@@ -170,12 +169,12 @@ function getAvailability(e) {
     }
   }
 
-  // For each room type, check availability for each date in range
+  
   const results = [];
   for (const room of roomsData) {
     const roomTypeID = String(room['RoomTypeID']);
     const roomName = room['Name'];
-    // select base price: if adults > 1 and BaseDouble exists use that, else BaseSingle
+    
     let basePrice = Number(room['BaseSingle'] || 0);
     if (adults > 1 && room['BaseDouble']) basePrice = Number(room['BaseDouble']);
 
@@ -196,7 +195,7 @@ function getAvailability(e) {
         available = false;
         break;
       }
-      // price for this night = basePrice * (1 + planModifier)
+      
       const nightly = Math.round(basePrice * (1 + (planModifier || 0)));
       breakdown.push({ date: dateStr, price: nightly });
       total += nightly;
@@ -218,7 +217,7 @@ function getAvailability(e) {
   return { results: results };
 }
 
-// ---------- Booking: append to Bookings sheet and increment Inventory Booked ----------
+
 function handleBooking(payload) {
   try {
     const ss = SpreadsheetApp.openById(SHEET_ID);
@@ -228,7 +227,7 @@ function handleBooking(payload) {
     const bookingID = "BK" + Utilities.getUuid().slice(0, 8);
     const ts = new Date();
 
-    // payload expected fields: guestName, email, phone, roomTypeID, planName, total, checkIn, checkOut, adults, children
+   
     const guestName = payload.guestName || "";
     const email = payload.email || "";
     const phone = payload.phone || "";
@@ -240,30 +239,29 @@ function handleBooking(payload) {
     const adults = payload.adults || 1;
     const children = payload.children || 0;
 
-    // Append booking row (create header if sheet empty)
+    
     if (!bookingsSheet) throw new Error("Bookings sheet not found");
-    // If bookings sheet has no data, ensure first row is header
+    
     if (bookingsSheet.getLastRow() === 0) {
       bookingsSheet.appendRow(["BookingID", "Timestamp", "GuestName", "Email", "Phone", "RoomTypeID", "PlanID", "Total", "CheckIn", "CheckOut", "Adults", "Children"]);
     }
 
     bookingsSheet.appendRow([bookingID, ts, guestName, email, phone, roomTypeID, planName, total, checkIn, checkOut, adults, children]);
 
-    // Now increment Booked in Inventory for each date & roomTypeID
-    // We'll look up the inventory rows and increment the 'Booked' cell where date and RoomTypeID match.
+    
     const invRange = invSheet.getDataRange();
     const invValues = invRange.getValues();
     const headers = invValues[0];
-    // find column indices
-    const dateColIdx = headers.indexOf(headers[0]); // first header is date
+   
+    const dateColIdx = headers.indexOf(headers[0]); 
     const roomTypeIdx = headers.indexOf('RoomTypeID');
     const bookedIdx = headers.indexOf('Booked');
 
-    // Build a map of (dateStr|roomTypeID) -> rowNumber (sheet index)
+    
     const map = {};
     for (let r = 1; r < invValues.length; r++) {
       const row = invValues[r];
-      // date cell may be a Date object
+      
       let dateCell = row[0];
       let dateStr;
       if (dateCell instanceof Date) {
@@ -275,7 +273,7 @@ function handleBooking(payload) {
       map[dateStr + '|' + rid] = r + 1; // 1-based sheet row index
     }
 
-    // For each date in the booked range, increment the Booked column (if row exists)
+    
     const start = new Date(checkIn);
     const end = new Date(checkOut);
     for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
@@ -286,7 +284,7 @@ function handleBooking(payload) {
         const currentBooked = invSheet.getRange(rowNumber, bookedIdx + 1).getValue();
         invSheet.getRange(rowNumber, bookedIdx + 1).setValue(Number(currentBooked || 0) + 1);
       } else {
-        // If inventory row missing for a date (shouldn't happen if availability was checked), skip
+       
       }
     }
 
@@ -295,3 +293,4 @@ function handleBooking(payload) {
     return { ok: false, message: err.message };
   }
 }
+
